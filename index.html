@@ -52,6 +52,7 @@
 
   <details>
     <summary>How does this work?</summary>
+    <p>The time comes from the GPS satellites when available (it works offline and the phone's clock can't change it), otherwise from network time, and only as a last resort from the phone's clock. The result shows which.</p>
     <p>When GPS Fieldmark saves a photo, the phone calculates a fingerprint (SHA-256) of the picture and signs it, together with the time, place and other details, using a key locked inside the phone's security chip. That signed record travels inside the photo file.</p>
     <p>This page recalculates the fingerprint and checks the signature. If even one pixel or one detail was changed, the check fails.</p>
     <p><b>What it can't tell you:</b> who owns the phone, or that the scene in front of the camera was genuine. It shows that the file is unchanged since that phone stamped it, plus how the time and place were obtained (satellites, phone clock, typed in by hand, or added later to a gallery photo).</p>
@@ -135,7 +136,7 @@
         } catch (e) { sigOk = false; }
       }
       const hasLoc = m.lat !== null && m.lon !== null && m.lat !== undefined;
-      const timeSrc = m.added_later ? "From the photo's file (stamp added later)" : m.time_source === "gps" ? "GPS satellites ✓" : "Phone clock";
+      const timeSrc = m.added_later ? "From the photo's file (stamp added later)" : m.time_source === "gps" ? "GPS satellites ✓" : m.time_source === "network" ? "Network time ✓" : "Phone clock";
       const rows = [
         ["File", m.record_file],
         ["Taken", fmtTime(m)],
@@ -168,7 +169,7 @@
       if (m.clock_suspect) return render("warn", "Unchanged, but the phone clock looked wrong",
         "The photo hasn't been changed, but the phone's clock disagreed with GPS time when it was taken, so the time may be off.", rows, checks);
       return render("ok", "Unchanged since it was stamped ✓",
-        "This photo and its details are exactly as GPS Fieldmark recorded them" + (m.time_source === "gps" ? ", with the time taken from GPS satellites." : "."), rows, checks);
+        "This photo and its details are exactly as GPS Fieldmark recorded them" + (m.time_source === "gps" ? ", with the time taken from GPS satellites." : m.time_source === "network" ? ", with the time taken from network time." : "."), rows, checks);
     } catch (e) {
       render("bad", "Couldn't read this file", "The file seems damaged or isn't a photo from GPS Fieldmark. (" + esc(e.message) + ")", null, null);
     }
