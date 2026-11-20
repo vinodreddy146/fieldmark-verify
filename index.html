@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Check a GPS Fieldmark photo</title>
+<meta name="description" content="Check that a GPS Fieldmark photo hasn't been changed since it was stamped. Runs in your browser; the photo is never uploaded.">
+<style>
+  :root { --ink:#0B0F14; --paper:#F6F5F1; --orange:#FF5A1F; --teal:#0F766E; --slate:#5B6673; --ok:#16A34A; --warn:#B45309; --bad:#DC2626; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display:flex; align-items:center; gap:12px; padding:18px 20px; max-width:760px; margin:0 auto; }
+  header b { font-size:20px; } header b span { color:var(--orange); }
+  main { max-width:760px; margin:0 auto; padding:0 20px 48px; }
+  h1 { font-size:28px; line-height:1.2; margin:8px 0 6px; }
+  .lead { color:var(--slate); margin:0 0 20px; }
+  .drop { display:block; border:2px dashed #C9C6BC; border-radius:16px; background:#fff; padding:34px 20px; text-align:center; cursor:pointer; transition:.15s; }
+  .drop.hover { border-color:var(--orange); background:#FFF6F2; }
+  .drop strong { display:block; font-size:18px; margin-bottom:4px; }
+  .drop small { color:var(--slate); }
+  input[type=file] { display:none; }
+  .btn { display:inline-block; margin-top:14px; background:var(--ink); color:#fff; border:0; border-radius:999px; padding:10px 20px; font-weight:600; font-size:15px; cursor:pointer; }
+  .card { margin-top:22px; background:#fff; border-radius:16px; padding:20px; border-left:8px solid var(--slate); box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .card.ok { border-color:var(--ok); } .card.warn { border-color:var(--warn); } .card.bad { border-color:var(--bad); }
+  .verdict { font-size:22px; font-weight:700; margin:0 0 6px; }
+  .ok .verdict { color:var(--ok); } .warn .verdict { color:var(--warn); } .bad .verdict { color:var(--bad); }
+  .why { margin:0; }
+  table { width:100%; border-collapse:collapse; margin-top:16px; font-size:15px; }
+  td { padding:7px 0; border-top:1px solid #EEE; vertical-align:top; } td:first-child { color:var(--slate); width:38%; padding-right:12px; }
+  .mono { font-family:ui-monospace, Menlo, Consolas, monospace; font-size:13px; word-break:break-all; }
+  .checks { list-style:none; padding:0; margin:14px 0 0; } .checks li { padding:3px 0; }
+  details { margin-top:26px; background:#fff; border-radius:12px; padding:14px 18px; }
+  summary { font-weight:600; cursor:pointer; }
+  footer { color:var(--slate); font-size:13px; text-align:center; padding:20px; }
+  a { color:var(--teal); }
+</style>
+</head>
+<body>
+<header><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="44" height="44"><rect width="512" height="512" rx="112" fill="#F6F5F1"/><g transform="translate(256 256) scale(0.84) translate(-256 -256)"><path d="M104,174 V104 H174" fill="none" stroke="#FF5A1F" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/><path d="M338,104 H408 V174" fill="none" stroke="#FF5A1F" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/><path d="M408,338 V408 H338" fill="none" stroke="#FF5A1F" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/><path d="M174,408 H104 V338" fill="none" stroke="#FF5A1F" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(0 -40)"><path d="M170,230 L227.33,214 V362 L170,378 Z" fill="#0F766E"/><path d="M227.33,214 L284.67,230 V378 L227.33,362 Z" fill="#14A38F"/><path d="M284.67,230 L342,214 V362 L284.67,378 Z" fill="#0F766E"/><clipPath id="mapclip"><path d="M170,230 L227.33,214 L284.67,230 L342,214 V362 L284.67,378 L227.33,362 L170,378 Z"/></clipPath><g clip-path="url(#mapclip)"><path d="M150,300 C200,288 236,322 290,300 S350,250 372,262" fill="none" stroke="#F6F5F1" stroke-width="11" stroke-linecap="round" opacity="1.0"/><path d="M206,200 C214,250 196,300 214,400" fill="none" stroke="#F6F5F1" stroke-width="7" stroke-linecap="round" opacity="0.85"/><path d="M300,200 L318,400" fill="none" stroke="#F6F5F1" stroke-width="6" stroke-linecap="round" opacity="0.6"/><path d="M182,352 C214,348 230,336 246,322" fill="none" stroke="#FF5A1F" stroke-width="6" stroke-linecap="round" stroke-dasharray="10 9"/><path d="M170,230 L227.33,214 V362 L170,378 Z" fill="#000000" opacity=".14"/><path d="M284.67,230 L342,214 V362 L284.67,378 Z" fill="#000000" opacity=".14"/></g><path d="M256,316.4 C239.2,280.4 208,251.6 208,206 A48,48 0 1 1 304,206 C304,251.6 272.8,280.4 256,316.4 Z" fill="#0B0F14" stroke="#F6F5F1" stroke-width="10" stroke-linejoin="round"/><circle cx="256" cy="206" r="18.24" fill="#F6F5F1"/></g></g></svg><b><span>GPS</span> Fieldmark</b></header>
+<main>
+  <h1>Check a GPS Fieldmark photo</h1>
+  <p class="lead">Find out if a stamped photo is exactly as it was when it was taken. Your photo is checked here in your browser and is <b>never uploaded</b>.</p>
+
+  <label class="drop" id="drop">
+    <strong>Drop the photo here</strong>
+    <small>or</small><br>
+    <span class="btn">Choose photo</span>
+    <input type="file" id="file" accept="image/jpeg,.jpg,.jpeg">
+  </label>
+
+  <div id="out"></div>
+
+  <details>
+    <summary>How does this work?</summary>
+    <p>When GPS Fieldmark saves a photo, the phone calculates a fingerprint (SHA-256) of the picture and signs it, together with the time, place and other details, using a key locked inside the phone's security chip. That signed record travels inside the photo file.</p>
+    <p>This page recalculates the fingerprint and checks the signature. If even one pixel or one detail was changed, the check fails.</p>
+    <p><b>What it can't tell you:</b> who owns the phone, or that the scene in front of the camera was genuine. It shows that the file is unchanged since that phone stamped it, plus how the time and place were obtained (satellites, phone clock, typed in by hand, or added later to a gallery photo).</p>
+    <p><b>Sent on WhatsApp?</b> WhatsApp and many apps shrink photos, which removes the record. Ask for the photo to be sent <b>as a document</b> (or by email / Drive) so the original file arrives unchanged.</p>
+  </details>
+</main>
+<footer>GPS Fieldmark photo check · works offline once loaded · nothing is uploaded or stored</footer>
+
+<script>
+(() => {
+  const MAGIC = new TextEncoder().encode("\nFMPROOF1\n");
+  const END = new TextEncoder().encode("\nFMEND\n");
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  const drop = $("drop"), input = $("file");
+  ["dragenter","dragover"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add("hover"); }));
+  ["dragleave","drop"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove("hover"); }));
+  drop.addEventListener("drop", ev => { const f = ev.dataTransfer.files[0]; if (f) check(f); });
+  input.addEventListener("change", () => { if (input.files[0]) check(input.files[0]); });
+
+  function matchAt(b, at, p) { if (at < 0 || at + p.length > b.length) return false; for (let k = 0; k < p.length; k++) if (b[at + k] !== p[k]) return false; return true; }
+  function findRecord(b) {
+    if (!matchAt(b, b.length - END.length, END)) return -1;
+    for (let i = b.length - END.length - MAGIC.length; i >= 0; i--) if (matchAt(b, i, MAGIC)) return i;
+    return -1;
+  }
+  const hex = (buf) => [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2, "0")).join("");
+  const b64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+  // Android signs in DER; WebCrypto wants the raw 64-byte r||s form
+  function derToRaw(der) {
+    let i = 0; if (der[i++] !== 0x30) throw new Error("bad signature");
+    let len = der[i++]; if (len & 0x80) i += (len & 0x7f);
+    const int = () => { if (der[i++] !== 0x02) throw new Error("bad signature"); const l = der[i++]; let v = der.slice(i, i + l); i += l;
+      while (v.length > 32 && v[0] === 0) v = v.slice(1); if (v.length > 32) throw new Error("bad signature");
+      const out = new Uint8Array(32); out.set(v, 32 - v.length); return out; };
+    const r = int(), s = int(); const raw = new Uint8Array(64); raw.set(r, 0); raw.set(s, 32); return raw;
+  }
+
+  function fmtTime(m) {
+    if (!m.time_ms) return "—";
+    const off = Number(m.utc_offset_min || 0);
+    const d = new Date(m.time_ms + off * 60000);
+    const p = (n) => String(n).padStart(2, "0");
+    const mon = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()];
+    const sign = off < 0 ? "-" : "+", a = Math.abs(off);
+    return `${p(d.getUTCDate())} ${mon} ${d.getUTCFullYear()}, ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())} (GMT${sign}${p(Math.floor(a/60))}:${p(a%60)})`;
+  }
+
+  function render(kind, verdict, why, rows, checks) {
+    $("out").innerHTML = `<div class="card ${kind}"><p class="verdict">${verdict}</p><p class="why">${why}</p>` +
+      (checks ? `<ul class="checks">${checks.map(c => `<li>${c}</li>`).join("")}</ul>` : "") +
+      (rows ? `<table>${rows.filter(r => r && r[1] !== undefined && r[1] !== null && r[1] !== "").map(r => `<tr><td>${esc(r[0])}</td><td class="${r[2]||""}">${r[3] ? r[1] : esc(r[1])}</td></tr>`).join("")}</table>` : "") +
+      `</div>`;
+    $("out").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function check(file) {
+    render("", "Checking…", esc(file.name), null, null);
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const at = findRecord(bytes);
+      if (at < 0) {
+        return render("bad", "No GPS Fieldmark record in this file",
+          "This file doesn't carry a GPS Fieldmark proof record. Either it wasn't made with GPS Fieldmark (version 0.7.8 or later), " +
+          "or it was resized or re-saved on the way (WhatsApp and many apps do this). Ask for the original photo, sent as a document.", null, null);
+      }
+      const rec = JSON.parse(new TextDecoder().decode(bytes.slice(at + MAGIC.length, bytes.length - END.length)));
+      const manifestText = rec.manifest; const m = JSON.parse(manifestText);
+      const image = bytes.slice(0, at);
+      const sha = hex(await crypto.subtle.digest("SHA-256", image));
+      const hashOk = sha === m.record_sha256;
+      let sigOk = false, fp = "—";
+      if (rec.signature && rec.public_key) {
+        const spki = b64(rec.public_key);
+        fp = hex(await crypto.subtle.digest("SHA-256", spki)).slice(0, 16);
+        try {
+          const key = await crypto.subtle.importKey("spki", spki, { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
+          sigOk = await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, key, derToRaw(b64(rec.signature)), new TextEncoder().encode(manifestText));
+        } catch (e) { sigOk = false; }
+      }
+      const hasLoc = m.lat !== null && m.lon !== null && m.lat !== undefined;
+      const timeSrc = m.added_later ? "From the photo's file (stamp added later)" : m.time_source === "gps" ? "GPS satellites ✓" : "Phone clock";
+      const rows = [
+        ["File", m.record_file],
+        ["Taken", fmtTime(m)],
+        ["Time source", timeSrc],
+        ["Location", hasLoc ? `<a href="https://www.openstreetmap.org/?mlat=${Number(m.lat)}&mlon=${Number(m.lon)}#map=18/${Number(m.lat)}/${Number(m.lon)}" target="_blank" rel="noopener">${Number(m.lat).toFixed(6)}, ${Number(m.lon).toFixed(6)}</a>` : "Not recorded", "", true],
+        ["Location source", m.location_manual ? "Typed in / picked by hand" : (m.source || "")],
+        ["Accuracy", m.h_acc_m != null ? `±${Number(m.h_acc_m).toFixed(1)} m` : ""],
+        ["Address", m.address],
+        ["Road / pipeline", m.chainage],
+        ["Project", [m.project, m.site].filter(Boolean).join(" › ")],
+        ["By", m.author], ["Note", m.note], ["Weather", m.weather],
+        ["Phone", m.device], ["App", m.app],
+        ["Phone key", fp, "mono"],
+        ["Picture fingerprint", sha, "mono"],
+      ];
+      const checks = [
+        (hashOk ? "✅" : "❌") + " Picture matches its fingerprint",
+        (sigOk ? "✅" : "❌") + " Signature from the phone's security key is valid",
+      ];
+      if (!hashOk) return render("bad", "Changed after it was stamped",
+        "The picture in this file is not the one that was signed. It was edited, cropped, filtered or re-saved after GPS Fieldmark stamped it.", rows, checks);
+      if (!sigOk) return render("bad", "Signature doesn't check out",
+        "The picture matches, but its details (time, place, notes) don't match the phone's signature. Treat this photo as unverified.", rows, checks);
+      if (m.added_later) return render("warn", "Unchanged, but the stamp was added later",
+        "This was an existing gallery photo stamped afterwards. Its date and place come from the photo file's own data, so they are <b>not proof</b> of when or where it was taken.", rows, checks);
+      if (m.location_manual) return render("warn", "Unchanged, but the location was entered by hand",
+        "The photo hasn't been changed since it was stamped, but its location was typed in or picked on a map, not measured by GPS.", rows, checks);
+      if (m.mock) return render("warn", "Unchanged, but a fake-location app was active",
+        "The photo hasn't been changed, but the phone reported that a mock-location app was running, so the location may be false.", rows, checks);
+      if (m.clock_suspect) return render("warn", "Unchanged, but the phone clock looked wrong",
+        "The photo hasn't been changed, but the phone's clock disagreed with GPS time when it was taken, so the time may be off.", rows, checks);
+      return render("ok", "Unchanged since it was stamped ✓",
+        "This photo and its details are exactly as GPS Fieldmark recorded them" + (m.time_source === "gps" ? ", with the time taken from GPS satellites." : "."), rows, checks);
+    } catch (e) {
+      render("bad", "Couldn't read this file", "The file seems damaged or isn't a photo from GPS Fieldmark. (" + esc(e.message) + ")", null, null);
+    }
+  }
+})();
+</script>
+</body>
+</html>
